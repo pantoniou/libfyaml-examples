@@ -37,6 +37,9 @@ src/.libs/
 src/version/.deps/
 src/version/.libs/
 src/libfyaml-version
+src/inprogram/.deps/
+src/inprogram/.libs/
+src/libfyaml-inprogram
 stamp-h1
 tags
 TAGS

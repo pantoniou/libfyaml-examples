@@ -8,3 +8,8 @@ bin_PROGRAMS += libfyaml-version
 
 libfyaml_version_SOURCES = \
 	version/version.c
+
+bin_PROGRAMS += libfyaml-inprogram
+
+libfyaml_inprogram_SOURCES = \
+	inprogram/inprogram.c
