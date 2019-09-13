@@ -28,21 +28,58 @@ int main(int argc, char *argv[])
 		"        lines: |\n"
 		"            458 Walkman Dr.\n"
 		"            Suite #292\n";
-	struct fy_document *fyd;
-	int rc;
+	struct fy_document *fyd = NULL;
+	int rc, count, ret = EXIT_FAILURE;
+	unsigned int invoice_nr;
+	char given[256 + 1];
 
+	/* parse the document in one go */
 	fyd = fy_document_build_from_string(NULL, yaml);
 	if (!fyd) {
 		fprintf(stderr, "failed to build document");
-		return EXIT_FAILURE;
+		goto fail;
+	}
+
+	/* get the invoice number and the given name */
+	count = fy_document_scanf(fyd,
+			"/invoice %u "
+			"/bill-to/given %256s",
+			&invoice_nr, given);
+	if (count != 2) {
+		fprintf(stderr, "Failed to retreive the two items\n");
+		goto fail;
+	}
+
+	/* print them as comments in the emitted YAML */
+	printf("# invoice number was %u\n", invoice_nr);
+	printf("# given name is %s\n", given);
+
+	/* set increased invoice number (modify existing node) */
+	rc = fy_document_insert_at(fyd, "/invoice",
+			fy_node_buildf(fyd, "%u", invoice_nr + 1));
+	if (rc) {
+		fprintf(stderr, "failed to insert to document\n");
+		goto fail;
+	}
+
+	/* add spouce (create new mapping pair) */
+	rc = fy_document_insert_at(fyd, "/bill-to",
+			fy_node_buildf(fyd, "spouse: %s", "Doris"));
+	if (rc) {
+		fprintf(stderr, "failed to insert to document\n");
+		goto fail;
 	}
 
 	/* emit the document to stdout */
 	rc = fy_emit_document_to_fp(fyd, FYECF_DEFAULT, stdout);
-	if (rc)
+	if (rc) {
 		fprintf(stderr, "failed to emit document to stdout");
+		goto fail;
+	}
+	ret = EXIT_SUCCESS;
 
-	fy_document_destroy(fyd);
+fail:
+	fy_document_destroy(fyd);	/* NULL is OK */
 
-	return !rc ? EXIT_SUCCESS : EXIT_FAILURE;
+	return ret;
 }
