@@ -34,7 +34,11 @@ int main(int argc, char *argv[])
 	char given[256 + 1];
 
 	/* parse the document in one go */
-	fyd = fy_document_build_from_string(NULL, yaml);
+	if (argc == 1)
+		fyd = fy_document_build_from_string(NULL, yaml);
+	else
+		fyd = fy_document_build_from_file(NULL, argv[1]);
+
 	if (!fyd) {
 		fprintf(stderr, "failed to build document");
 		goto fail;
@@ -54,30 +58,30 @@ int main(int argc, char *argv[])
 	printf("# invoice number was %u\n", invoice_nr);
 	printf("# given name is %s\n", given);
 
-	/* set increased invoice number (modify existing node) */
-	rc = fy_document_insert_at(fyd, "/invoice",
-			fy_node_buildf(fyd, "%u", invoice_nr + 1));
+	rc =
+		/* set increased invoice number (modify existing node) */
+		fy_document_insert_at(fyd, "/invoice",
+			fy_node_buildf(fyd, "%u", invoice_nr + 1)) ||
+		/* add spouce (create new mapping pair) */
+		fy_document_insert_at(fyd, "/bill-to",
+			fy_node_buildf(fyd, "spouse: %s", "Doris")) ||
+		/* add a second address */
+		fy_document_insert_at(fyd, "/bill-to",
+			fy_node_buildf(fyd, "delivery-address:\n"
+				            "  lines: |\n"
+					    "    1226 Windward Ave.\n"));
 	if (rc) {
 		fprintf(stderr, "failed to insert to document\n");
 		goto fail;
 	}
 
-	/* add spouce (create new mapping pair) */
-	rc = fy_document_insert_at(fyd, "/bill-to",
-			fy_node_buildf(fyd, "spouse: %s", "Doris"));
-	if (rc) {
-		fprintf(stderr, "failed to insert to document\n");
-		goto fail;
-	}
-
-	/* emit the document to stdout */
-	rc = fy_emit_document_to_fp(fyd, FYECF_DEFAULT, stdout);
+	/* emit the document to stdout (but sorted) */
+	rc = fy_emit_document_to_fp(fyd, FYECF_DEFAULT | FYECF_SORT_KEYS, stdout);
 	if (rc) {
 		fprintf(stderr, "failed to emit document to stdout");
 		goto fail;
 	}
 	ret = EXIT_SUCCESS;
-
 fail:
 	fy_document_destroy(fyd);	/* NULL is OK */
 
