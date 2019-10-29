@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 
 	/* parse the document in one go */
 	if (argc == 1)
-		fyd = fy_document_build_from_string(NULL, yaml);
+		fyd = fy_document_build_from_string(NULL, yaml, (size_t)-1);
 	else
 		fyd = fy_document_build_from_file(NULL, argv[1]);
 
@@ -60,13 +60,13 @@ int main(int argc, char *argv[])
 
 	rc =
 		/* set increased invoice number (modify existing node) */
-		fy_document_insert_at(fyd, "/invoice",
+		fy_document_insert_at(fyd, "/invoice", (size_t)-1,
 			fy_node_buildf(fyd, "%u", invoice_nr + 1)) ||
 		/* add spouce (create new mapping pair) */
-		fy_document_insert_at(fyd, "/bill-to",
+		fy_document_insert_at(fyd, "/bill-to", (size_t)-1,
 			fy_node_buildf(fyd, "spouse: %s", "Doris")) ||
 		/* add a second address */
-		fy_document_insert_at(fyd, "/bill-to",
+		fy_document_insert_at(fyd, "/bill-to", (size_t)-1,
 			fy_node_buildf(fyd, "delivery-address:\n"
 				            "  lines: |\n"
 					    "    1226 Windward Ave.\n"));
