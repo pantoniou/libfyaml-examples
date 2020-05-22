@@ -13,3 +13,8 @@ bin_PROGRAMS += libfyaml-inprogram
 
 libfyaml_inprogram_SOURCES = \
 	inprogram/inprogram.c
+
+bin_PROGRAMS += libfyaml-binary
+
+libfyaml_binary_SOURCES = \
+	binary/binary.c
